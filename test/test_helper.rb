@@ -26,7 +26,7 @@ unless ENV.has_key?('VERBOSE')
   $log = nulllogger
 end
 
-require 'fluent/plugin/rewrite'
+require 'fluent/plugin/out_rewrite'
 
 class Test::Unit::TestCase
 end

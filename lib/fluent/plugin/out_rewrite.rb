@@ -24,6 +24,11 @@ module Fluent
         if element.has_key?("pattern")
           element["regex"] = Regexp.new(element["pattern"])
         end
+
+        element.keys.each do |k|
+          # read and throw away to supress unread configuration warning
+          element[k]
+        end
       }
     end
 
