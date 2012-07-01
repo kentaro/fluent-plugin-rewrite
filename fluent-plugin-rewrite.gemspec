@@ -1,6 +1,6 @@
 Gem::Specification.new do |gem|
   gem.name          = "fluent-plugin-rewrite"
-  gem.version       = '0.0.2'
+  gem.version       = '0.0.3'
   gem.authors       = ["Kentaro Kuribayashi"]
   gem.email         = ["kentarok@gmail.com"]
   gem.homepage      = "http://github.com/kentaro/fluent-plugin-rewrite"

@@ -66,7 +66,9 @@ module Fluent
       end
 
       rules.each do |rule|
-        tag, record = apply_rule(rule, tag, record)
+        tag, record, last = apply_rule(rule, tag, record)
+
+        break  if last
         return if !tag && !record
       end
 
@@ -77,6 +79,7 @@ module Fluent
       tag     = rule["append_to_tag"] ? tag.dup : tag
       key     = rule["key"]
       pattern = rule["pattern"]
+      last    = nil
 
       return [tag, record] if !key || !record.has_key?(key)
       return [tag, record] unless pattern
@@ -85,12 +88,16 @@ module Fluent
         return if rule["ignore"]
 
         if rule["replace"]
-          replace = rule["replace"].to_s
+          replace = rule["replace"]
           record[key] = record[key].gsub(rule["regex"], replace)
         end
 
         if rule["append_to_tag"]
           matched.captures.each { |m| tag << ".#{m}" }
+        end
+
+        if rule["last"]
+          last = true
         end
       else
         if rule["append_to_tag"] && rule["fallback"]
@@ -98,7 +105,7 @@ module Fluent
         end
       end
 
-      [tag, record]
+      [tag, record, last]
     end
   end
 end

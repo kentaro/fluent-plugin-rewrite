@@ -142,6 +142,31 @@ class RewriteOutputTest < Test::Unit::TestCase
     )
   end
 
+  def test_last
+    d = create_driver(%[
+      <rule>
+        key     path
+        pattern ^/foo$
+        replace /bar
+        last    true
+      </rule>
+      <rule>
+        key     path
+        pattern ^/bar$
+        replace /baz
+      </rule>
+    ])
+
+    assert_equal(
+      [ "test", { "path" => "/bar" } ],
+      d.instance.rewrite("test", { "path" => "/foo" })
+    )
+    assert_equal(
+      [ "test", { "path" => "/baz" } ],
+      d.instance.rewrite("test", { "path" => "/bar" })
+    )
+  end
+
   def test_rewrite_rules
     d = create_driver(%[
       <rule>

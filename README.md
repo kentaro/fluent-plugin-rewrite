@@ -145,6 +145,49 @@ This time, the messabe above will be re-emmited as the message below:
 apache.log.others { "path" : "/foo/bar" }
 ```
 
+### rule: last
+
+If you set `last` option to true, rewriting chain stops applying rule where the pattern matches first.
+
+```
+<rule>
+  key     path
+  pattern ^/foo$
+  replace /bar
+  last    true
+</rule>
+<rule>
+  key     path
+  pattern ^/bar$
+  replace /baz
+</rule>
+```
+
+This rules will be applied like below:
+
+```
+{ "path" => "/foo" }
+```
+
+will be replaced with
+
+```
+{ "path" => "/bar" }
+```
+
+and the chain stops here. Therefore, the second rule is never
+applied.
+
+```
+{ "path" => "/bar" }
+```
+
+will be replaced by the second rule as usual.
+
+```
+{ "path" => "/baz" }
+```
+
 ## Installation
 
 Add this line to your application's Gemfile:
