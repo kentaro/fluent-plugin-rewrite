@@ -37,6 +37,12 @@ matching and re-emit them.
     append_to_tag true
     fallback      others
   </rule>
+  <rule>
+    key           is_loggged_in
+    pattern       1
+    append_to_tag true
+    tag           user
+  </rule>
 </match>
 ```
 
@@ -143,6 +149,30 @@ This time, the messabe above will be re-emmited as the message below:
 
 ```
 apache.log.others { "path" : "/foo/bar" }
+```
+
+If `tag` option set,
+
+```
+<rule>
+  key           is_loggged_in
+  pattern       1
+  append_to_tag true
+  tag           user
+</rule>
+```
+
+the value designated by `tag` will be appended to the original tag, that is:
+
+
+```
+test { "is_logged_in" => "1" }
+```
+
+will be
+
+```
+test.user { "is_logged_in" => "1" }
 ```
 
 ### rule: last

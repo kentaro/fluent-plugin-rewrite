@@ -140,6 +140,24 @@ class RewriteOutputTest < Test::Unit::TestCase
       [ "test.others", { "path" => "/unmatched/path" } ],
       d2.instance.rewrite("test", { "path" => "/unmatched/path" })
     )
+
+    d3 = create_driver(%[
+      <rule>
+        key           is_logged_in
+        pattern       1
+        append_to_tag true
+        tag           user
+      </rule>
+    ])
+
+    assert_equal(
+      [ "test.user", { "is_logged_in" => "1" } ],
+      d3.instance.rewrite("test", { "is_logged_in" => "1" })
+    )
+    assert_equal(
+      [ "test", { "is_logged_in" => "0" } ],
+      d3.instance.rewrite("test", { "is_logged_in" => "0" })
+    )
   end
 
   def test_last

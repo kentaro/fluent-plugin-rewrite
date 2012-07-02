@@ -93,7 +93,11 @@ module Fluent
         end
 
         if rule["append_to_tag"]
-          matched.captures.each { |m| tag << ".#{m}" }
+          if rule["tag"]
+            tag << ".#{rule["tag"]}"
+          else
+            matched.captures.each { |m| tag << ".#{m}" }
+          end
         end
 
         if rule["last"]
