@@ -58,7 +58,7 @@ module Fluent
       if @remove_prefix and
           ((tag.start_with?(@removed_prefix_string) && tag.length > @removed_length) ||
           tag == @remove_prefix)
-        tag = tag[@removed_length..-1]
+        tag = tag[@removed_length..-1] || ''
       end
 
       if @add_prefix
@@ -94,9 +94,9 @@ module Fluent
 
         if rule["append_to_tag"]
           if rule["tag"]
-            tag << ".#{rule["tag"]}"
+            tag << (tag == "" ? "" : ".") << "#{rule["tag"]}"
           else
-            matched.captures.each { |m| tag << ".#{m}" }
+            matched.captures.each { |m| tag << (tag == "" ? "" : ".") << "#{m}" }
           end
         end
 

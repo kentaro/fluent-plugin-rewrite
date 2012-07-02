@@ -158,6 +158,37 @@ class RewriteOutputTest < Test::Unit::TestCase
       [ "test", { "is_logged_in" => "0" } ],
       d3.instance.rewrite("test", { "is_logged_in" => "0" })
     )
+
+    d4 = create_driver(%[
+      remove_prefix test
+
+      <rule>
+        key           path
+        pattern       ^\/(users|entries)
+        append_to_tag true
+      </rule>
+    ])
+
+    assert_equal(
+      [ "users", { "path" => "/users/antipop" } ],
+      d4.instance.rewrite("test", { "path" => "/users/antipop" })
+    )
+
+    d5 = create_driver(%[
+      remove_prefix test
+
+      <rule>
+        key           is_logged_in
+        pattern       1
+        append_to_tag true
+        tag           user
+      </rule>
+    ])
+
+    assert_equal(
+      [ "user", { "is_logged_in" => "1" } ],
+      d5.instance.rewrite("test", { "is_logged_in" => "1" })
+    )
   end
 
   def test_last
