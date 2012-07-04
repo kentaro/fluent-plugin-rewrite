@@ -51,8 +51,8 @@ module Fluent
       end
 
       es.each do |time, record|
-        filtered_tag, record = rewrite(tag, record)
-        Engine.emit(filtered_tag, time, record) if (filtered_tag && record) && (filtered_tag != tag)
+        tag, record = rewrite(tag, record)
+        Engine.emit(tag, time, record) if tag && record
       end
 
       chain.next

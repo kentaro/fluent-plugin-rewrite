@@ -247,7 +247,7 @@ class RewriteOutputTest < Test::Unit::TestCase
   end
 
   def test_emit
-    d = create_driver(%[
+    d1 = create_driver(%[
       remove_prefix test
       add_prefix    filtered
 
@@ -269,14 +269,14 @@ class RewriteOutputTest < Test::Unit::TestCase
       </rule>
     ])
 
-    d.run do
-      d.emit({ "path" => "/foo?bar=1" })
-      d.emit({ "path" => "/foo?bar=1", "status" => "500" })
-      d.emit({ "path" => "/users/antipop" })
-      d.emit({ "path" => "/users/kentaro" })
-      d.emit({ "path" => "/entries/1" })
+    d1.run do
+      d1.emit({ "path" => "/foo?bar=1" })
+      d1.emit({ "path" => "/foo?bar=1", "status" => "500" })
+      d1.emit({ "path" => "/users/antipop" })
+      d1.emit({ "path" => "/users/kentaro" })
+      d1.emit({ "path" => "/entries/1" })
     end
-    emits = d.emits
+    emits = d1.emits
 
     assert_equal 4, emits.size
     assert_equal('filtered.others', emits[0][0])
@@ -287,5 +287,21 @@ class RewriteOutputTest < Test::Unit::TestCase
     assert_equal({ "path" => "/users/kentaro" }, emits[2][2])
     assert_equal('filtered.entries', emits[3][0])
     assert_equal({ "path" => "/entries/1" }, emits[3][2])
+
+    d2 = create_driver(%[
+      <rule>
+        key     path
+        pattern \\?.+$
+        replace
+      </rule>
+    ])
+    d2.run do
+      d2.emit({ "path" => "/foo?bar=1" })
+    end
+    emits = d2.emits
+
+    assert_equal 1, emits.size
+    assert_equal('test', emits[0][0])
+    assert_equal({ "path" => "/foo" }, emits[0][2])
   end
 end
