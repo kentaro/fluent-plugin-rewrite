@@ -41,23 +41,8 @@ module Fluent
     end
 
     def emit(tag, es, chain)
-      es.each do |time, record|
-        tag, record = rewrite(tag, record)
-        Engine.emit(tag, time, record) if tag && record
-      end
-
-      chain.next
-    end
-
-    def length_will_be_removed
-      return 0 unless @remove_prefix
-      (@remove_prefix + '.').length
-    end
-
-    def rewrite(tag, record)
       if @remove_prefix and
-          ((tag.start_with?(@removed_prefix_string) && tag.length > @removed_length) ||
-          tag == @remove_prefix)
+        ((tag.start_with?(@removed_prefix_string) && tag.length > @removed_length) || tag == @remove_prefix)
         tag = tag[@removed_length..-1] || ''
       end
 
@@ -65,6 +50,15 @@ module Fluent
         tag = tag && tag.length > 0 ? @added_prefix_string + tag : @add_prefix
       end
 
+      es.each do |time, record|
+        filtered_tag, record = rewrite(tag, record)
+        Engine.emit(filtered_tag, time, record) if (filtered_tag && record) && (filtered_tag != tag)
+      end
+
+      chain.next
+    end
+
+    def rewrite(tag, record)
       rules.each do |rule|
         tag, record, last = apply_rule(rule, tag, record)
 
@@ -76,10 +70,10 @@ module Fluent
     end
 
     def apply_rule(rule, tag, record)
-      tag     = rule["append_to_tag"] ? tag.dup : tag
-      key     = rule["key"]
-      pattern = rule["pattern"]
-      last    = nil
+      tag_prefix = tag && tag.length > 0 ? "." : ""
+      key        = rule["key"]
+      pattern    = rule["pattern"]
+      last       = nil
 
       return [tag, record] if !key || !record.has_key?(key)
       return [tag, record] unless pattern
@@ -94,9 +88,11 @@ module Fluent
 
         if rule["append_to_tag"]
           if rule["tag"]
-            tag << (tag == "" ? "" : ".") << "#{rule["tag"]}"
+            tag += (tag_prefix + rule["tag"])
           else
-            matched.captures.each { |m| tag << (tag == "" ? "" : ".") << "#{m}" }
+            matched.captures.each do |m|
+              tag += (tag_prefix + "#{m}")
+            end
           end
         end
 
@@ -105,7 +101,7 @@ module Fluent
         end
       else
         if rule["append_to_tag"] && rule["fallback"]
-          tag << ".#{rule["fallback"]}"
+          tag += (tag_prefix + rule["fallback"])
         end
       end
 

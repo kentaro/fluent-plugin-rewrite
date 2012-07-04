@@ -160,8 +160,6 @@ class RewriteOutputTest < Test::Unit::TestCase
     )
 
     d4 = create_driver(%[
-      remove_prefix test
-
       <rule>
         key           path
         pattern       ^\/(users|entries)
@@ -170,13 +168,11 @@ class RewriteOutputTest < Test::Unit::TestCase
     ])
 
     assert_equal(
-      [ "users", { "path" => "/users/antipop" } ],
+      [ "test.users", { "path" => "/users/antipop" } ],
       d4.instance.rewrite("test", { "path" => "/users/antipop" })
     )
 
     d5 = create_driver(%[
-      remove_prefix test
-
       <rule>
         key           is_logged_in
         pattern       1
@@ -186,7 +182,7 @@ class RewriteOutputTest < Test::Unit::TestCase
     ])
 
     assert_equal(
-      [ "user", { "is_logged_in" => "1" } ],
+      [ "test.user", { "is_logged_in" => "1" } ],
       d5.instance.rewrite("test", { "is_logged_in" => "1" })
     )
   end
@@ -250,24 +246,6 @@ class RewriteOutputTest < Test::Unit::TestCase
     )
   end
 
-  def test_tag_prefix
-    d = create_driver(%[
-      remove_prefix test
-      add_prefix    filtered
-
-      <rule>
-        key           path
-        pattern       ^\/(users|entries)
-        append_to_tag true
-      </rule>
-    ])
-
-    assert_equal(
-      [ "filtered.users", { "path" => "/users/antipop" } ],
-      d.instance.rewrite("test", { "path" => "/users/antipop" })
-    )
-  end
-
   def test_emit
     d = create_driver(%[
       remove_prefix test
@@ -293,15 +271,21 @@ class RewriteOutputTest < Test::Unit::TestCase
 
     d.run do
       d.emit({ "path" => "/foo?bar=1" })
-      d.emit({ "path" => "/users/antipop?hoge=1" })
       d.emit({ "path" => "/foo?bar=1", "status" => "500" })
+      d.emit({ "path" => "/users/antipop" })
+      d.emit({ "path" => "/users/kentaro" })
+      d.emit({ "path" => "/entries/1" })
     end
     emits = d.emits
 
-    assert_equal 2, emits.size
+    assert_equal 4, emits.size
     assert_equal('filtered.others', emits[0][0])
     assert_equal({ "path" => "/foo" }, emits[0][2])
     assert_equal('filtered.users', emits[1][0])
     assert_equal({ "path" => "/users/antipop" }, emits[1][2])
+    assert_equal('filtered.users', emits[2][0])
+    assert_equal({ "path" => "/users/kentaro" }, emits[2][2])
+    assert_equal('filtered.entries', emits[3][0])
+    assert_equal({ "path" => "/entries/1" }, emits[3][2])
   end
 end
