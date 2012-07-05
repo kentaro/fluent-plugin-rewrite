@@ -76,6 +76,12 @@ module Fluent
       last       = nil
 
       return [tag, record] if !key || !record.has_key?(key)
+
+      if duplicate_key = rule["duplicate"]
+        duplicate_key = duplicate_key.gsub(/__TAG__/, tag)
+        record[duplicate_key] = record[key]
+      end
+
       return [tag, record] unless pattern
 
       if matched = record[key].match(rule["regex"])

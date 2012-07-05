@@ -212,6 +212,28 @@ class RewriteOutputTest < Test::Unit::TestCase
     )
   end
 
+  def test_duplicate
+    d = create_driver(%[
+      <rule>
+        key       avg
+        duplicate dupped_avg
+      </rule>
+      <rule>
+        key       max
+        duplicate __TAG__.max
+      </rule>
+    ])
+
+    assert_equal(
+      [ "test", { "avg" => "100", "dupped_avg" => "100" } ],
+      d.instance.rewrite("test", { "avg" => "100" })
+    )
+    assert_equal(
+      [ "test", { "max" => "1000", "test.max" => "1000" } ],
+      d.instance.rewrite("test", { "max" => "1000" })
+    )
+  end
+
   def test_rewrite_rules
     d = create_driver(%[
       <rule>
