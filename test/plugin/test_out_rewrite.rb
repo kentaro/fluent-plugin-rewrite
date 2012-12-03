@@ -16,12 +16,15 @@ class RewriteOutputTest < Test::Unit::TestCase
 
       <rule>
         key foo
+        pattern \\?.+$
       </rule>
       <to_be_ignored>
         key bar
+        pattern \\?.+$
       </to_be_ignored>
       <rule>
         key baz
+        pattern \\?.+$
       </rule>
     ])
 
@@ -300,8 +303,19 @@ class RewriteOutputTest < Test::Unit::TestCase
     end
     emits = d2.emits
 
-    assert_equal 1, emits.size
-    assert_equal('test', emits[0][0])
-    assert_equal({ "path" => "/foo" }, emits[0][2])
+    assert_equal 0, emits.size
+
+    d3 = create_driver(%[
+      <rule>
+        key     path
+        pattern ^\/(users|entries)
+      </rule>
+    ])
+    d3.run do
+      d3.emit({ "path" => "/pull-requester/studio3104" })
+    end
+    emits = d3.emits
+
+    assert_equal 0, emits.size
   end
 end
