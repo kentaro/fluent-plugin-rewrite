@@ -292,6 +292,8 @@ class RewriteOutputTest < Test::Unit::TestCase
     assert_equal({ "path" => "/entries/1" }, emits[3][2])
 
     d2 = create_driver(%[
+      add_prefix filtered
+
       <rule>
         key     path
         pattern \\?.+$
@@ -300,22 +302,63 @@ class RewriteOutputTest < Test::Unit::TestCase
     ])
     d2.run do
       d2.emit({ "path" => "/foo?bar=1" })
-    end
+    end 
     emits = d2.emits
 
-    assert_equal 0, emits.size
+    assert_equal 1, emits.size
+    assert_equal('filtered.test', emits[0][0])
+    assert_equal({ "path" => "/foo" }, emits[0][2])
 
     d3 = create_driver(%[
+      <rule>
+        key     path
+        pattern \\?.+$
+        replace
+      </rule>
+    ])
+    d3.run do
+      d3.emit({ "path" => "/foo?bar=1" })
+    end
+    emits = d3.emits
+
+    assert_equal 0, emits.size
+    assert_equal(
+      "Drop record \{\"path\"=>\"/foo\"\} tag 'test' was not replaced. Can't emit record, cause infinity looping.",
+      d3.instance.warn_msg
+    )
+
+    d4 = create_driver(%[
       <rule>
         key     path
         pattern ^\/(users|entries)
       </rule>
     ])
-    d3.run do
-      d3.emit({ "path" => "/pull-requester/studio3104" })
+    d4.run do
+      d4.emit({ "path" => "/pull-requester/studio3104" })
     end
-    emits = d3.emits
+    emits = d4.emits
 
     assert_equal 0, emits.size
+    assert_equal(
+      "Since there is no rule matches, can't emit record \{\"path\"=>\"/pull-requester/studio3104\"\}, cause infinity looping. If you want to emit even if do not match a rules, set the 'fallback' rule.",
+      d4.instance.warn_msg
+    )
+
+    d5 = create_driver(%[
+      <rule>
+        key     status
+        pattern ^500
+      </rule>
+    ])
+    d5.run do
+      d5.emit({ "path" => "/foo?bar=1" })
+    end
+    emits = d5.emits
+
+    assert_equal 0, emits.size
+    assert_equal(
+      "Since there is no matching JSON key \"status\", can't emit record {\"path\"=>\"/foo?bar=1\"}, cause infinity looping. Check the rules of the setting where the pattern has become \"^500\"",
+      d5.instance.warn_msg
+    )
   end
 end

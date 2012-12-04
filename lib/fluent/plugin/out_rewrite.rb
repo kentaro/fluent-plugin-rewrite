@@ -22,13 +22,16 @@ module Fluent
       @rules = conf.elements.select { |element|
         element.name == 'rule'
       }.each { |element|
-        if element["pattern"] && element["key"]
+
+        if element.has_key?("pattern") && element.has_key?("key")
           element["regex"] = Regexp.new(element["pattern"])
         else
-          raise ConfigError, "out_rewrite: In the rules section, must set both 'key' and 'pattern'."
+          raise ConfigError, "out_rewrite: In the rules section, both 'key' and 'pattern' must be set."
         end
 
-        element["append_to_tag"] = true if element["tag"] || element["fallback"]
+        if element["tag"] || element["fallback"]
+          element["append_to_tag"] = true
+        end
 
         element.keys.each do |k|
           # read and throw away to supress unread configuration warning
@@ -46,6 +49,9 @@ module Fluent
     end
 
     def emit(tag, es, chain)
+      @warn_msg = nil
+      _tag = tag.clone
+
       if @remove_prefix and
         ((tag.start_with?(@removed_prefix_string) && tag.length > @removed_length) || tag == @remove_prefix)
         tag = tag[@removed_length..-1] || ''
@@ -57,11 +63,13 @@ module Fluent
 
       es.each do |time, record|
         filtered_tag, record = rewrite(tag, record)
-        if filtered_tag && record && tag != filtered_tag
-          Engine.emit(filtered_tag, time, record)
+        if _tag == filtered_tag
+          if !@warn_msg
+            @warn_msg = "Drop record #{record} tag '#{tag}' was not replaced. Can't emit record, cause infinity looping."
+          end
+          $log.warn "out_rewrite: #{@warn_log}"
         else
-          $log.warn @warn_msg
-          @warn_msg = nil
+          Engine.emit(filtered_tag, time, record) if filtered_tag && record
         end
       end
 
@@ -69,7 +77,6 @@ module Fluent
     end
 
     def rewrite(tag, record)
-      _tag = tag.clone
       rules.each do |rule|
         tag, record, last = apply_rule(rule, tag, record)
 
@@ -77,7 +84,6 @@ module Fluent
         return if !tag && !record
       end
 
-      @warn_msg = "out_rewrite: Drop record #{record} tag '#{tag}' was not replaced. Can't emit record, cause infinity looping." if _tag == tag && !@warn_msg
       [tag, record]
     end
 
@@ -88,7 +94,7 @@ module Fluent
       last       = nil
 
       if !record.has_key?(key)
-        @warn_msg = "out_rewrite: Since there is no matching JSON key \"#{key}\", can't emit record #{record}, cause infinity looping. Check the rules of the setting where the pattern has become \"#{pattern}\""
+        @warn_msg = "Since there is no matching JSON key \"#{key}\", can't emit record #{record}, cause infinity looping. Check the rules of the setting where the pattern has become \"#{pattern}\""
         return [tag, record]
       end
 
@@ -117,7 +123,7 @@ module Fluent
         if rule["append_to_tag"] && rule["fallback"]
           tag += (tag_prefix + rule["fallback"])
         else
-          @warn_msg = "out_rewrite: Since there is no rule matches, can't emit record #{record}, cause infinity looping. If you want to emit even if do not match a rules, set the 'fallback' rule."
+          @warn_msg = "Since there is no rule matches, can't emit record #{record}, cause infinity looping. If you want to emit even if do not match a rules, set the 'fallback' rule."
         end
       end
 
