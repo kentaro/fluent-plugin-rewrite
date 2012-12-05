@@ -16,22 +16,55 @@ class RewriteOutputTest < Test::Unit::TestCase
 
       <rule>
         key foo
+        pattern \\?.+$
       </rule>
       <to_be_ignored>
         key bar
+        pattern \\?.+$
       </to_be_ignored>
       <rule>
         key baz
+        pattern \\?.+$
       </rule>
     ])
 
     assert_equal "test",     d.instance.remove_prefix
     assert_equal "filtered", d.instance.add_prefix
     assert_equal 2, d.instance.rules.size
+
+    begin
+      create_driver(%[
+        <rule>
+          key foo
+        </rule>
+      ])
+    rescue => error
+    ensure
+      assert_equal(
+        error.message,
+        "out_rewrite: In the rules section, both 'key' and 'pattern' must be set."
+      )
+    end
+
+    begin
+      create_driver(%[
+        <rule>
+          key foo
+          pattern \\?.+$
+        </rule>
+      ])
+    rescue => error
+    ensure
+      assert_equal(
+        error.message,
+        "out_rewrite: 'add_prefix' or 'remove_prefix' option has been set. or finally 'append_to_tag' must be set in the rule section. Your invalid key(s) is(are) [\"foo\"]"
+      )
+    end
   end
 
   def test_rewrite_replace
     d1 = create_driver(%[
+      add_prefix rewrited
       <rule>
         key     path
         pattern \\?.+$
@@ -45,6 +78,7 @@ class RewriteOutputTest < Test::Unit::TestCase
     )
 
     d2 = create_driver(%[
+      add_prefix rewrited
       <rule>
         key     path
         pattern (/[^/]+)\\?([^=]+)=(\\d)
@@ -189,6 +223,7 @@ class RewriteOutputTest < Test::Unit::TestCase
 
   def test_last
     d = create_driver(%[
+      add_prefix rewrited
       <rule>
         key     path
         pattern ^/foo$
@@ -289,6 +324,8 @@ class RewriteOutputTest < Test::Unit::TestCase
     assert_equal({ "path" => "/entries/1" }, emits[3][2])
 
     d2 = create_driver(%[
+      add_prefix filtered
+
       <rule>
         key     path
         pattern \\?.+$
@@ -297,11 +334,47 @@ class RewriteOutputTest < Test::Unit::TestCase
     ])
     d2.run do
       d2.emit({ "path" => "/foo?bar=1" })
-    end
+    end 
     emits = d2.emits
 
     assert_equal 1, emits.size
-    assert_equal('test', emits[0][0])
+    assert_equal('filtered.test', emits[0][0])
     assert_equal({ "path" => "/foo" }, emits[0][2])
+
+    d3 = create_driver(%[
+      <rule>
+        key     status
+        pattern ^500
+        tag     internal
+      </rule>
+    ])
+    d3.run do
+      d3.emit({ "path" => "/foo?bar=1" })
+    end
+    emits = d3.emits
+
+    assert_equal 0, emits.size
+    assert_equal(
+      "Since there is no matching JSON key \"status\", can't emit record {\"path\"=>\"/foo?bar=1\"}, cause infinity looping. Check the rules of the setting where the pattern has become \"^500\"",
+      d3.instance.warn_msg
+    )
+
+    d4 = create_driver(%[
+      <rule>
+        key     path
+        pattern ^\/(users|entries)
+        append_to_tag true
+      </rule>
+    ])
+    d4.run do
+      d4.emit({ "path" => "/pull-requester/studio3104" })
+    end
+    emits = d4.emits
+
+    assert_equal 0, emits.size
+    assert_equal(
+      "Since there is no rule matches, can't emit record \{\"path\"=>\"/pull-requester/studio3104\"\}, cause infinity looping. If you want to emit even if do not match a rules, set the 'fallback' rule.",
+      d4.instance.warn_msg
+    )
   end
 end
