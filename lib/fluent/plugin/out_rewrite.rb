@@ -19,9 +19,15 @@ module Fluent
         @added_prefix_string = @add_prefix + '.'
       end
 
+      invalid_keys = Array.new
+
       @rules = conf.elements.select { |element|
         element.name == 'rule'
       }.each { |element|
+
+        if element["tag"] || element["fallback"]
+          element["append_to_tag"] = true
+        end
 
         if element.has_key?("pattern") && element.has_key?("key")
           element["regex"] = Regexp.new(element["pattern"])
@@ -29,8 +35,14 @@ module Fluent
           raise ConfigError, "out_rewrite: In the rules section, both 'key' and 'pattern' must be set."
         end
 
-        if element["tag"] || element["fallback"]
-          element["append_to_tag"] = true
+        if !@remove_prefix && !@add_prefix
+          unless element.has_key?("ignore")
+            invalid_keys << element["key"]
+          end
+
+          if invalid_keys.include?(element["key"]) && element.has_key?("append_to_tag")
+            invalid_keys.delete(element["key"])
+          end
         end
 
         element.keys.each do |k|
@@ -38,6 +50,10 @@ module Fluent
           element[k]
         end
       }
+
+      if invalid_keys.size != 0
+        raise ConfigError, "out_rewrite: 'add_prefix' or 'remove_prefix' option has been set. or finally 'append_to_tag' must be set in the rule section. Your invalid key(s) is(are) #{invalid_keys.uniq}"
+      end
     end
 
     def start
@@ -63,13 +79,10 @@ module Fluent
 
       es.each do |time, record|
         filtered_tag, record = rewrite(tag, record)
-        if _tag == filtered_tag
-          if !@warn_msg
-            @warn_msg = "Drop record #{record} tag '#{tag}' was not replaced. Can't emit record, cause infinity looping."
-          end
-          $log.warn "out_rewrite: #{@warn_log}"
+        if _tag != tag && filtered_tag && record
+          Engine.emit(filtered_tag, time, record)
         else
-          Engine.emit(filtered_tag, time, record) if filtered_tag && record
+          $log.warn "out_rewrite: #{@warn_msg}"
         end
       end
 
