@@ -41,6 +41,8 @@ module Fluent
     end
 
     def emit(tag, es, chain)
+      _tag = tag.clone
+
       if @remove_prefix and
         ((tag.start_with?(@removed_prefix_string) && tag.length > @removed_length) || tag == @remove_prefix)
         tag = tag[@removed_length..-1] || ''
@@ -52,7 +54,11 @@ module Fluent
 
       es.each do |time, record|
         filtered_tag, record = rewrite(tag, record)
-        Engine.emit(filtered_tag, time, record) if filtered_tag && record
+        if filtered_tag && record && _tag != filtered_tag
+          Engine.emit(filtered_tag, time, record)
+        else
+          $log.warn "Can not emit message because the tag(#{tag}) has not changed. Dropped record #{record}"
+        end
       end
 
       chain.next
