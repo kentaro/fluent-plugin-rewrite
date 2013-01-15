@@ -289,6 +289,8 @@ class RewriteOutputTest < Test::Unit::TestCase
     assert_equal({ "path" => "/entries/1" }, emits[3][2])
 
     d2 = create_driver(%[
+      add_prefix filtered
+
       <rule>
         key     path
         pattern \\?.+$
@@ -301,7 +303,38 @@ class RewriteOutputTest < Test::Unit::TestCase
     emits = d2.emits
 
     assert_equal 1, emits.size
-    assert_equal('test', emits[0][0])
+    assert_equal('filtered.test', emits[0][0])
     assert_equal({ "path" => "/foo" }, emits[0][2])
+
+    # Test for not emit if the tag has not changed.
+    d3 = create_driver(%[
+      <rule>
+        key     path
+        pattern \\?.+$
+        replace
+      </rule>
+    ])
+    d3.run do
+      d3.emit({ "path" => "/foo?bar=1" })
+    end
+
+    assert_equal 0, d3.emits.size
+
+    # Emit message if the rewrite tag rules have been defined, even if (add|remove)_prefix option is not set.
+    d4 = create_driver(%[
+      <rule>
+        key           path
+        pattern       ^\/(users|entries)
+        append_to_tag true
+      </rule>
+    ])
+    d4.run do
+      d4.emit({ "path" => "/users/studio3104" })
+    end
+    emits = d4.emits
+
+    assert_equal 1, emits.size
+    assert_equal('test.users', emits[0][0])
+    assert_equal({ "path" => "/users/studio3104" }, emits[0][2])
   end
 end
