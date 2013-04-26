@@ -2,8 +2,9 @@ module Fluent
   class RewriteOutput < Output
     Fluent::Plugin.register_output('rewrite', self)
 
-    config_param :remove_prefix, :string, :default => nil
-    config_param :add_prefix,    :string, :default => nil
+    config_param :remove_prefix,   :string, :default => nil
+    config_param :add_prefix,      :string, :default => nil
+    config_param :enable_warnings, :bool,   :default => false
 
     attr_reader  :rules
 
@@ -57,7 +58,9 @@ module Fluent
         if filtered_tag && record && _tag != filtered_tag
           Engine.emit(filtered_tag, time, record)
         else
-          $log.warn "Can not emit message because the tag(#{tag}) has not changed. Dropped record #{record}"
+          if @enable_warnings
+            $log.warn "Can not emit message because the tag(#{tag}) has not changed. Dropped record #{record}"
+          end
         end
       end
 
