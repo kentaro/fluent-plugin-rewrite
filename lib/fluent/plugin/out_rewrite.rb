@@ -19,18 +19,15 @@ module Fluent
         @added_prefix_string = @add_prefix + '.'
       end
 
-      @rules = conf.elements.select { |element|
-        element.name == 'rule'
-      }.each { |element|
-        if element.has_key?("pattern")
-          element["regex"] = Regexp.new(element["pattern"])
-        end
-
-        element.keys.each do |k|
+      @rules = conf.elements.select {|element| element.name == 'rule' }.map do |element|
+        rule = {}
+        element.keys.each do |key|
           # read and throw away to supress unread configuration warning
-          element[k]
+          rule[key] = element[key]
         end
-      }
+        rule["regex"] = Regexp.new(element["pattern"]) if element.has_key?("pattern")
+        rule
+      end
     end
 
     def start
