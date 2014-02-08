@@ -1,4 +1,4 @@
-# fluent-plugin-rewrite
+# fluent-plugin-rewrite, a plugin for [Fluentd](http://fluentd.org)
 
 ## Component
 
