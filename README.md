@@ -87,6 +87,7 @@ This time, if you want to rewrite path string along with some pattern:
 ```
 
 It executes pattern matching against a value related with `key` and replaces it with `replace` if it matches.
+Need `()` in `pattern` if you want to refer values in `replace`. This is Ruby's [capturing feature](http://www.ruby-doc.org/core-2.1.1/doc/regexp_rdoc.html#label-Capturing).
 
 ```
 /foo?bar=1 -> /foo/bar/1
@@ -116,7 +117,8 @@ It executes pattern matching against a value related with `key` and skip emittin
 </rule>
 ```
 
-It executes pattern matching against a value related with `key` and append mathed strings to message tag. For example:
+It executes pattern matching against a value related with `key` and append mathed strings to message tag. 
+This also need `()` to append values to tag. See [rule: replace](#rule-replace) section. For example:
 
 ```
 apache.log { "path" : "/users/antipop" }
