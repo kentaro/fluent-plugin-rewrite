@@ -2,6 +2,11 @@ module Fluent
   class RewriteOutput < Output
     Fluent::Plugin.register_output('rewrite', self)
 
+    # Define `router` method of v0.12 to support v0.10.57 or earlier
+    unless method_defined?(:router)
+      define_method("router") { Engine }
+    end
+
     config_param :remove_prefix,   :string, :default => nil
     config_param :add_prefix,      :string, :default => nil
     config_param :enable_warnings, :bool,   :default => false
