@@ -53,7 +53,7 @@ module Fluent
       es.each do |time, record|
         filtered_tag, record = rewrite(tag, record)
         if filtered_tag && record && _tag != filtered_tag
-          Engine.emit(filtered_tag, time, record)
+          router.emit(filtered_tag, time, record)
         else
           if @enable_warnings
             $log.warn "Can not emit message because the tag(#{tag}) has not changed. Dropped record #{record}"
