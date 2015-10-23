@@ -149,10 +149,6 @@ class RewriteFilterTest < Test::Unit::TestCase
         pattern ^500$
         ignore  true
       </rule>
-      <rule>
-        key           path
-        pattern       ^\/(users|entries)
-      </rule>
     ])
 
     assert_equal(
@@ -182,10 +178,6 @@ class RewriteFilterTest < Test::Unit::TestCase
           pattern ^500$
           ignore  true
         </rule>
-        <rule>
-          key           path
-          pattern       ^\/(users|entries)
-        </rule>
       ])
 
       d.run do
@@ -193,19 +185,16 @@ class RewriteFilterTest < Test::Unit::TestCase
         d.filter({ "path" => "/foo?bar=1", "status" => "500" })
         d.filter({ "path" => "/users/antipop" })
         d.filter({ "path" => "/users/kentaro" })
-        d.filter({ "path" => "/entries/1" })
       end
       filtered = d.filtered_as_array
 
-      assert_equal 4, filtered.size
+      assert_equal 3, filtered.size
       assert_equal('test', filtered[0][0])
       assert_equal([{ "path" => "/foo" }], filtered[0][2])
       assert_equal('test', filtered[1][0])
-      assert_equal([{ "path" => "/users/antipop" }], filtered[1][2])
+      assert_equal([{ "path" => "/users/antipop" }], filtered[1][2]) # nothing to do
       assert_equal('test', filtered[2][0])
-      assert_equal([{ "path" => "/users/kentaro" }], filtered[2][2])
-      assert_equal('test', filtered[3][0])
-      assert_equal([{ "path" => "/entries/1" }], filtered[3][2])
+      assert_equal([{ "path" => "/users/kentaro" }], filtered[2][2]) # nothing to do
     end
 
     def test_remove_query_params
@@ -224,23 +213,6 @@ class RewriteFilterTest < Test::Unit::TestCase
       assert_equal 1, filtered.size
       assert_equal('test', filtered[0][0])
       assert_equal([{ "path" => "/foo" }], filtered[0][2])
-    end
-
-    def test_with_only_key_and_pattern_rule
-      d = create_driver(%[
-        <rule>
-          key           path
-          pattern       ^\/(users|entries)
-        </rule>
-      ])
-      d.run do
-        d.filter({ "path" => "/users/studio3104" })
-      end
-      filtered = d.filtered_as_array
-
-      assert_equal 1, filtered.size
-      assert_equal('test', filtered[0][0])
-      assert_equal([{ "path" => "/users/studio3104" }], filtered[0][2])
     end
   end
 end
