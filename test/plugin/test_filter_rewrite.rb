@@ -24,7 +24,7 @@ class RewriteFilterTest < Test::Unit::TestCase
       </rule>
     ])
 
-    assert_equal 2, d.instance.rules.size
+    assert_equal 2, d.instance.rewrite_rule.rules.size
   end
 
   class TestRewrite < self
@@ -39,7 +39,7 @@ class RewriteFilterTest < Test::Unit::TestCase
 
       assert_equal(
         [ { "path" => "/foo" } ],
-        d.instance.rewrite({ "path" => "/foo?bar=1" })
+        d.instance.rewrite_rule.rewrite({ "path" => "/foo?bar=1" })
       )
     end
 
@@ -54,7 +54,7 @@ class RewriteFilterTest < Test::Unit::TestCase
 
       assert_equal(
         [ { "path" => "/foo/bar/1" } ],
-        d.instance.rewrite({ "path" => "/foo?bar=1" })
+        d.instance.rewrite_rule.rewrite({ "path" => "/foo?bar=1" })
       )
     end
   end
@@ -71,7 +71,7 @@ class RewriteFilterTest < Test::Unit::TestCase
 
       assert_equal(
         nil,
-        d.instance.rewrite({ "status" => "500" })
+        d.instance.rewrite_rule.rewrite({ "status" => "500" })
       )
     end
 
@@ -86,12 +86,12 @@ class RewriteFilterTest < Test::Unit::TestCase
 
       assert_equal(
         [ { "status" => "200" } ],
-        d.instance.rewrite({ "status" => "200" })
+        d.instance.rewrite_rule.rewrite({ "status" => "200" })
       )
       %w[301 404 500].each do |status|
         assert_equal(
           nil,
-          d.instance.rewrite({ "status" => status })
+          d.instance.rewrite_rule.rewrite({ "status" => status })
         )
       end
     end
@@ -107,7 +107,7 @@ class RewriteFilterTest < Test::Unit::TestCase
 
       assert_equal(
         nil,
-        d.instance.rewrite({ "flag" => "" })
+        d.instance.rewrite_rule.rewrite({ "flag" => "" })
       )
     end
   end
@@ -129,11 +129,11 @@ class RewriteFilterTest < Test::Unit::TestCase
 
     assert_equal(
       [ { "path" => "/bar" } ],
-      d.instance.rewrite({ "path" => "/foo" })
+      d.instance.rewrite_rule.rewrite({ "path" => "/foo" })
     )
     assert_equal(
       [ { "path" => "/baz" } ],
-      d.instance.rewrite({ "path" => "/bar" })
+      d.instance.rewrite_rule.rewrite({ "path" => "/bar" })
     )
   end
 
@@ -153,15 +153,15 @@ class RewriteFilterTest < Test::Unit::TestCase
 
     assert_equal(
       [ { "path" => "/foo" } ],
-      d.instance.rewrite({ "path" => "/foo?bar=1" })
+      d.instance.rewrite_rule.rewrite({ "path" => "/foo?bar=1" })
     )
     assert_equal(
       [ { "path" => "/users/antipop" } ],
-      d.instance.rewrite({ "path" => "/users/antipop?hoge=1" })
+      d.instance.rewrite_rule.rewrite({ "path" => "/users/antipop?hoge=1" })
     )
     assert_equal(
       nil,
-      d.instance.rewrite({ "path" => "/foo?bar=1", "status" => "500" })
+      d.instance.rewrite_rule.rewrite({ "path" => "/foo?bar=1", "status" => "500" })
     )
   end
 
