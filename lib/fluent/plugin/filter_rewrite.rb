@@ -2,7 +2,7 @@ module Fluent
   class RewriteFilter < Filter
     Fluent::Plugin.register_filter('rewrite', self)
 
-    attr_reader  :rules, :rewrite_rule
+    attr_reader :rewrite_rule
 
     def configure(conf)
       require 'fluent/plugin/rewrite_rule'

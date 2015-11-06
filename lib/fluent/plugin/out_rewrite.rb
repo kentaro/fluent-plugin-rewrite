@@ -11,7 +11,7 @@ module Fluent
     config_param :add_prefix,      :string, :default => nil
     config_param :enable_warnings, :bool,   :default => false
 
-    attr_reader  :rules, :rewrite_rule
+    attr_reader  :rewrite_rule
 
     def configure(conf)
       require 'fluent/plugin/rewrite_rule'
