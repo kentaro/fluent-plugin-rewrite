@@ -27,7 +27,7 @@ class RewriteOutputTest < Test::Unit::TestCase
 
     assert_equal "test",     d.instance.remove_prefix
     assert_equal "filtered", d.instance.add_prefix
-    assert_equal 2, d.instance.rules.size
+    assert_equal 2, d.instance.rewrite_rule.rules.size
   end
 
   def test_rewrite_replace
@@ -41,7 +41,7 @@ class RewriteOutputTest < Test::Unit::TestCase
 
     assert_equal(
       [ "test", { "path" => "/foo" } ],
-      d1.instance.rewrite("test", { "path" => "/foo?bar=1" })
+      d1.instance.rewrite_rule.rewrite("test", { "path" => "/foo?bar=1" })
     )
 
     d2 = create_driver(%[
@@ -54,7 +54,7 @@ class RewriteOutputTest < Test::Unit::TestCase
 
     assert_equal(
       [ "test", { "path" => "/foo/bar/1" } ],
-      d2.instance.rewrite("test", { "path" => "/foo?bar=1" })
+      d2.instance.rewrite_rule.rewrite("test", { "path" => "/foo?bar=1" })
     )
   end
 
@@ -69,7 +69,7 @@ class RewriteOutputTest < Test::Unit::TestCase
 
     assert_equal(
       nil,
-      d1.instance.rewrite("test", { "status" => "500" })
+      d1.instance.rewrite_rule.rewrite("test", { "status" => "500" })
     )
 
     d2 = create_driver(%[
@@ -82,12 +82,12 @@ class RewriteOutputTest < Test::Unit::TestCase
 
     assert_equal(
       [ "test", { "status" => "200" } ],
-      d2.instance.rewrite("test", { "status" => "200" })
+      d2.instance.rewrite_rule.rewrite("test", { "status" => "200" })
     )
     %w[301 404 500].each do |status|
       assert_equal(
         nil,
-        d2.instance.rewrite("test", { "status" => status })
+        d2.instance.rewrite_rule.rewrite("test", { "status" => status })
       )
     end
 
@@ -101,7 +101,7 @@ class RewriteOutputTest < Test::Unit::TestCase
 
     assert_equal(
       nil,
-      d3.instance.rewrite("test", { "flag" => "" })
+      d3.instance.rewrite_rule.rewrite("test", { "flag" => "" })
     )
   end
 
@@ -116,11 +116,11 @@ class RewriteOutputTest < Test::Unit::TestCase
 
     assert_equal(
       [ "test.users", { "path" => "/users/antipop" } ],
-      d1.instance.rewrite("test", { "path" => "/users/antipop" })
+      d1.instance.rewrite_rule.rewrite("test", { "path" => "/users/antipop" })
     )
     assert_equal(
       [ "test", { "path" => "/unmatched/path" } ],
-      d1.instance.rewrite("test", { "path" => "/unmatched/path" })
+      d1.instance.rewrite_rule.rewrite("test", { "path" => "/unmatched/path" })
     )
 
     d2 = create_driver(%[
@@ -134,11 +134,11 @@ class RewriteOutputTest < Test::Unit::TestCase
 
     assert_equal(
       [ "test.users", { "path" => "/users/antipop" } ],
-      d2.instance.rewrite("test", { "path" => "/users/antipop" })
+      d2.instance.rewrite_rule.rewrite("test", { "path" => "/users/antipop" })
     )
     assert_equal(
       [ "test.others", { "path" => "/unmatched/path" } ],
-      d2.instance.rewrite("test", { "path" => "/unmatched/path" })
+      d2.instance.rewrite_rule.rewrite("test", { "path" => "/unmatched/path" })
     )
 
     d3 = create_driver(%[
@@ -152,11 +152,11 @@ class RewriteOutputTest < Test::Unit::TestCase
 
     assert_equal(
       [ "test.user", { "is_logged_in" => "1" } ],
-      d3.instance.rewrite("test", { "is_logged_in" => "1" })
+      d3.instance.rewrite_rule.rewrite("test", { "is_logged_in" => "1" })
     )
     assert_equal(
       [ "test", { "is_logged_in" => "0" } ],
-      d3.instance.rewrite("test", { "is_logged_in" => "0" })
+      d3.instance.rewrite_rule.rewrite("test", { "is_logged_in" => "0" })
     )
 
     d4 = create_driver(%[
@@ -169,7 +169,7 @@ class RewriteOutputTest < Test::Unit::TestCase
 
     assert_equal(
       [ "test.users", { "path" => "/users/antipop" } ],
-      d4.instance.rewrite("test", { "path" => "/users/antipop" })
+      d4.instance.rewrite_rule.rewrite("test", { "path" => "/users/antipop" })
     )
 
     d5 = create_driver(%[
@@ -183,7 +183,7 @@ class RewriteOutputTest < Test::Unit::TestCase
 
     assert_equal(
       [ "test.user", { "is_logged_in" => "1" } ],
-      d5.instance.rewrite("test", { "is_logged_in" => "1" })
+      d5.instance.rewrite_rule.rewrite("test", { "is_logged_in" => "1" })
     )
   end
 
@@ -204,11 +204,11 @@ class RewriteOutputTest < Test::Unit::TestCase
 
     assert_equal(
       [ "test", { "path" => "/bar" } ],
-      d.instance.rewrite("test", { "path" => "/foo" })
+      d.instance.rewrite_rule.rewrite("test", { "path" => "/foo" })
     )
     assert_equal(
       [ "test", { "path" => "/baz" } ],
-      d.instance.rewrite("test", { "path" => "/bar" })
+      d.instance.rewrite_rule.rewrite("test", { "path" => "/bar" })
     )
   end
 
@@ -234,15 +234,15 @@ class RewriteOutputTest < Test::Unit::TestCase
 
     assert_equal(
       [ "test.others", { "path" => "/foo" } ],
-      d.instance.rewrite("test", { "path" => "/foo?bar=1" })
+      d.instance.rewrite_rule.rewrite("test", { "path" => "/foo?bar=1" })
     )
     assert_equal(
       [ "test.users", { "path" => "/users/antipop" } ],
-      d.instance.rewrite("test", { "path" => "/users/antipop?hoge=1" })
+      d.instance.rewrite_rule.rewrite("test", { "path" => "/users/antipop?hoge=1" })
     )
     assert_equal(
       nil,
-      d.instance.rewrite("test", { "path" => "/foo?bar=1", "status" => "500" })
+      d.instance.rewrite_rule.rewrite("test", { "path" => "/foo?bar=1", "status" => "500" })
     )
   end
 
