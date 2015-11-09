@@ -20,14 +20,14 @@ module Fluent
         tag, record, last = apply_rule(rule, tag, record)
 
         break  if last
-        if @plugin.is_a?(Fluent::Filter)
-          return if !record
-        elsif @plugin.is_a?(Fluent::Output)
+        if @plugin.is_a?(Fluent::Output)
           return if !tag && !record
+        else
+          return if !record
         end
       end
 
-      return [record] if @plugin.is_a?(Fluent::Filter)
+      return [record] if not @plugin.is_a?(Fluent::Output)
       return [tag, record] if @plugin.is_a?(Fluent::Output)
     end
 
