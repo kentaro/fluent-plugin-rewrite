@@ -11,7 +11,7 @@ matching and re-emit them.
 
 ```
 <match apache.log.**>
-  type rewrite
+  @type rewrite
 
   remove_prefix apache.log
   add_prefix    filtered
