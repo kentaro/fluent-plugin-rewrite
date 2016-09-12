@@ -1,12 +1,13 @@
 require 'test_helper'
+require 'fluent/test/driver/output'
 
 class RewriteOutputTest < Test::Unit::TestCase
   def setup
     Fluent::Test.setup
   end
 
-  def create_driver(conf, tag = 'test')
-    Fluent::Test::OutputTestDriver.new(Fluent::RewriteOutput, tag).configure(conf)
+  def create_driver(conf)
+    Fluent::Test::Driver::Output.new(Fluent::Plugin::RewriteOutput).configure(conf)
   end
 
   def test_configure
@@ -269,24 +270,24 @@ class RewriteOutputTest < Test::Unit::TestCase
       </rule>
     ])
 
-    d1.run do
-      d1.emit({ "path" => "/foo?bar=1" })
-      d1.emit({ "path" => "/foo?bar=1", "status" => "500" })
-      d1.emit({ "path" => "/users/antipop" })
-      d1.emit({ "path" => "/users/kentaro" })
-      d1.emit({ "path" => "/entries/1" })
+    d1.run(default_tag: 'test') do
+      d1.feed({ "path" => "/foo?bar=1" })
+      d1.feed({ "path" => "/foo?bar=1", "status" => "500" })
+      d1.feed({ "path" => "/users/antipop" })
+      d1.feed({ "path" => "/users/kentaro" })
+      d1.feed({ "path" => "/entries/1" })
     end
-    emits = d1.emits
+    events = d1.events
 
-    assert_equal 4, emits.size
-    assert_equal('filtered.others', emits[0][0])
-    assert_equal({ "path" => "/foo" }, emits[0][2])
-    assert_equal('filtered.users', emits[1][0])
-    assert_equal({ "path" => "/users/antipop" }, emits[1][2])
-    assert_equal('filtered.users', emits[2][0])
-    assert_equal({ "path" => "/users/kentaro" }, emits[2][2])
-    assert_equal('filtered.entries', emits[3][0])
-    assert_equal({ "path" => "/entries/1" }, emits[3][2])
+    assert_equal 4, events.size
+    assert_equal('filtered.others', events[0][0])
+    assert_equal({ "path" => "/foo" }, events[0][2])
+    assert_equal('filtered.users', events[1][0])
+    assert_equal({ "path" => "/users/antipop" }, events[1][2])
+    assert_equal('filtered.users', events[2][0])
+    assert_equal({ "path" => "/users/kentaro" }, events[2][2])
+    assert_equal('filtered.entries', events[3][0])
+    assert_equal({ "path" => "/entries/1" }, events[3][2])
 
     d2 = create_driver(%[
       add_prefix filtered
@@ -297,14 +298,14 @@ class RewriteOutputTest < Test::Unit::TestCase
         replace
       </rule>
     ])
-    d2.run do
-      d2.emit({ "path" => "/foo?bar=1" })
+    d2.run(default_tag: 'test') do
+      d2.feed({ "path" => "/foo?bar=1" })
     end
-    emits = d2.emits
+    events = d2.events
 
-    assert_equal 1, emits.size
-    assert_equal('filtered.test', emits[0][0])
-    assert_equal({ "path" => "/foo" }, emits[0][2])
+    assert_equal 1, events.size
+    assert_equal('filtered.test', events[0][0])
+    assert_equal({ "path" => "/foo" }, events[0][2])
 
     # Test for not emit if the tag has not changed.
     d3 = create_driver(%[
@@ -314,11 +315,11 @@ class RewriteOutputTest < Test::Unit::TestCase
         replace
       </rule>
     ])
-    d3.run do
-      d3.emit({ "path" => "/foo?bar=1" })
+    d3.run(default_tag: 'test') do
+      d3.feed({ "path" => "/foo?bar=1" })
     end
 
-    assert_equal 0, d3.emits.size
+    assert_equal 0, d3.events.size
 
     # Emit message if the rewrite tag rules have been defined, even if (add|remove)_prefix option is not set.
     d4 = create_driver(%[
@@ -328,13 +329,13 @@ class RewriteOutputTest < Test::Unit::TestCase
         append_to_tag true
       </rule>
     ])
-    d4.run do
-      d4.emit({ "path" => "/users/studio3104" })
+    d4.run(default_tag: 'test') do
+      d4.feed({ "path" => "/users/studio3104" })
     end
-    emits = d4.emits
+    events = d4.events
 
-    assert_equal 1, emits.size
-    assert_equal('test.users', emits[0][0])
-    assert_equal({ "path" => "/users/studio3104" }, emits[0][2])
+    assert_equal 1, events.size
+    assert_equal('test.users', events[0][0])
+    assert_equal({ "path" => "/users/studio3104" }, events[0][2])
   end
 end
