@@ -62,6 +62,8 @@ module Fluent
           last = true
         end
       else
+        return if rule["filter"]
+
         if rule["append_to_tag"] && rule["fallback"] && @plugin.is_a?(Fluent::Output)
           tag += (tag_prefix + rule["fallback"])
         end
