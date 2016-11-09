@@ -8,9 +8,9 @@ module Fluent
         rule = {}
         element.keys.each do |key|
           # read and throw away to supress unread configuration warning
-          rule[key] = element[key]
+          rule[key.to_sym] = element[key]
         end
-        rule["regex"] = Regexp.new(element["pattern"]) if element.has_key?("pattern")
+        rule[:regex] = Regexp.new(element["pattern"]) if element.has_key?("pattern")
         rule
       end
     end
@@ -33,24 +33,24 @@ module Fluent
 
     def apply_rule(rule, tag=nil, record)
       tag_prefix = tag && tag.length > 0 ? "." : ""
-      key        = rule["key"]
-      pattern    = rule["pattern"]
+      key        = rule[:key]
+      pattern    = rule[:pattern]
       last       = nil
 
       return [tag, record] if !key || !record.has_key?(key)
       return [tag, record] unless pattern
 
-      if matched = record[key].match(rule["regex"])
-        return if rule["ignore"]
+      if matched = record[key].match(rule[:regex])
+        return if rule[:ignore]
 
-        if rule["replace"]
-          replace = rule["replace"]
-          record[key] = record[key].gsub(rule["regex"], replace)
+        if rule[:replace]
+          replace = rule[:replace]
+          record[key] = record[key].gsub(rule[:regex], replace)
         end
 
-        if rule["append_to_tag"] && @plugin.is_a?(Fluent::Output)
-          if rule["tag"]
-            tag += (tag_prefix + rule["tag"])
+        if rule[:append_to_tag] && @plugin.is_a?(Fluent::Output)
+          if rule[:tag]
+            tag += (tag_prefix + rule[:tag])
           else
             matched.captures.each do |m|
               tag += (tag_prefix + "#{m}")
@@ -58,12 +58,12 @@ module Fluent
           end
         end
 
-        if rule["last"]
+        if rule[:last]
           last = true
         end
       else
-        if rule["append_to_tag"] && rule["fallback"] && @plugin.is_a?(Fluent::Output)
-          tag += (tag_prefix + rule["fallback"])
+        if rule[:append_to_tag] && rule[:fallback] && @plugin.is_a?(Fluent::Output)
+          tag += (tag_prefix + rule[:fallback])
         end
       end
 
