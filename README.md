@@ -220,6 +220,55 @@ will be replaced by the second rule as usual.
 { "path" => "/baz" }
 ```
 
+### RewriteFilter
+
+Filter plugin to modify messages' values along with pattern
+matching and filter them.
+
+Note that filter version of rewrite plugin does not have append/add tags functionality.
+
+Thus, this filter version does not able to specify `append_to_tag`, `tag`, and `fallback` rules.
+
+## Synopsis
+
+```
+<filter apache.log.**>
+  type rewrite
+
+  <rule>
+    key     path
+    pattern \\?.+$
+    replace
+  </rule>
+  <rule>
+    key     path
+    pattern (/[^/]+)\\?([^=]+)=(\\d)
+    replace \\1/\\2/\\3
+  </rule>
+  <rule>
+    key     status
+    pattern ^500$
+    ignore  true
+  </rule>
+</match>
+```
+
+## Configuration
+
+Note: This filter version of rewrite plugin does not have `remove_prefix` and `add_prefix` configuration.
+
+### rule: replace
+
+Same as OutputRewrite section's [rule: replace](#rule-replace).
+
+### rule: ignore
+
+Same as OutputRewrite section's [rule: ignore](#rule-ignore).
+
+### rule: last
+
+Same as OutputRewrite section's [rule: last](#rule-last).
+
 ## Installation
 
 Add this line to your application's Gemfile:

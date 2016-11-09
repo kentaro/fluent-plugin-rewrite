@@ -27,6 +27,7 @@ unless ENV.has_key?('VERBOSE')
 end
 
 require 'fluent/plugin/out_rewrite'
+require 'fluent/plugin/filter_rewrite'
 
 class Test::Unit::TestCase
 end
