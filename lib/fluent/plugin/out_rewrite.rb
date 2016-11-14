@@ -1,14 +1,15 @@
-module Fluent
+require 'fluent/plugin/output'
+
+module Fluent::Plugin
   class RewriteOutput < Output
     Fluent::Plugin.register_output('rewrite', self)
 
-    # Define `router` method of v0.12 to support v0.10.57 or earlier
-    unless method_defined?(:router)
-      define_method("router") { Engine }
-    end
+    helpers :event_emitter
 
-    config_param :remove_prefix,   :string, :default => nil
-    config_param :add_prefix,      :string, :default => nil
+    config_param :remove_prefix,   :string, :default => nil,
+                 deprecated: "use @label instead for event routing"
+    config_param :add_prefix,      :string, :default => nil,
+                 deprecated: "use @label instead for event routing"
     config_param :enable_warnings, :bool,   :default => false
 
     attr_reader  :rewrite_rule
@@ -26,7 +27,7 @@ module Fluent
         @added_prefix_string = @add_prefix + '.'
       end
 
-      @rewrite_rule = RewriteRule.new(self, conf)
+      @rewrite_rule = Fluent::RewriteRule.new(self, conf)
     end
 
     def start
@@ -37,7 +38,7 @@ module Fluent
       super
     end
 
-    def emit(tag, es, chain)
+    def process(tag, es)
       _tag = tag.clone
 
       if @remove_prefix and
@@ -59,8 +60,6 @@ module Fluent
           end
         end
       end
-
-      chain.next
     end
   end
 end

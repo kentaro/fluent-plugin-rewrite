@@ -20,15 +20,15 @@ module Fluent
         tag, record, last = apply_rule(rule, tag, record)
 
         break  if last
-        if @plugin.is_a?(Fluent::Output)
+        if @plugin.is_a?(Fluent::Plugin::Output)
           return if !tag && !record
         else
           return if !record
         end
       end
 
-      return [record] if not @plugin.is_a?(Fluent::Output)
-      return [tag, record] if @plugin.is_a?(Fluent::Output)
+      return [record] if not @plugin.is_a?(Fluent::Plugin::Output)
+      return [tag, record] if @plugin.is_a?(Fluent::Plugin::Output)
     end
 
     def apply_rule(rule, tag=nil, record)
@@ -48,7 +48,7 @@ module Fluent
           record[key] = record[key].gsub(rule["regex"], replace)
         end
 
-        if rule["append_to_tag"] && @plugin.is_a?(Fluent::Output)
+        if rule["append_to_tag"] && @plugin.is_a?(Fluent::Plugin::Output)
           if rule["tag"]
             tag += (tag_prefix + rule["tag"])
           else
@@ -62,7 +62,7 @@ module Fluent
           last = true
         end
       else
-        if rule["append_to_tag"] && rule["fallback"] && @plugin.is_a?(Fluent::Output)
+        if rule["append_to_tag"] && rule["fallback"] && @plugin.is_a?(Fluent::Plugin::Output)
           tag += (tag_prefix + rule["fallback"])
         end
       end

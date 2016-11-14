@@ -233,7 +233,7 @@ Thus, this filter version does not able to specify `append_to_tag`, `tag`, and `
 
 ```
 <filter apache.log.**>
-  type rewrite
+  @type rewrite
 
   <rule>
     key     path

@@ -1,14 +1,13 @@
 require 'test_helper'
+require 'fluent/test/driver/filter'
 
 class RewriteFilterTest < Test::Unit::TestCase
   def setup
-    omit("These tests require Fluentd v0.12 or later.") unless defined?(Fluent::Filter)
-
     Fluent::Test.setup
   end
 
-  def create_driver(conf, tag = 'test')
-    Fluent::Test::FilterTestDriver.new(Fluent::RewriteFilter, tag).configure(conf)
+  def create_driver(conf)
+    Fluent::Test::Driver::Filter.new(Fluent::Plugin::RewriteFilter).configure(conf)
   end
 
   def test_configure
@@ -180,21 +179,18 @@ class RewriteFilterTest < Test::Unit::TestCase
         </rule>
       ])
 
-      d.run do
-        d.filter({ "path" => "/foo?bar=1" })
-        d.filter({ "path" => "/foo?bar=1", "status" => "500" })
-        d.filter({ "path" => "/users/antipop" })
-        d.filter({ "path" => "/users/kentaro" })
+      d.run(default_tag: 'test') do
+        d.feed({ "path" => "/foo?bar=1" })
+        d.feed({ "path" => "/foo?bar=1", "status" => "500" })
+        d.feed({ "path" => "/users/antipop" })
+        d.feed({ "path" => "/users/kentaro" })
       end
-      filtered = d.filtered_as_array
+      filtered = d.filtered
 
       assert_equal 3, filtered.size
-      assert_equal('test', filtered[0][0])
-      assert_equal([{ "path" => "/foo" }], filtered[0][2])
-      assert_equal('test', filtered[1][0])
-      assert_equal([{ "path" => "/users/antipop" }], filtered[1][2]) # nothing to do
-      assert_equal('test', filtered[2][0])
-      assert_equal([{ "path" => "/users/kentaro" }], filtered[2][2]) # nothing to do
+      assert_equal([{ "path" => "/foo" }], filtered[0][1])
+      assert_equal([{ "path" => "/users/antipop" }], filtered[1][1]) # nothing to do
+      assert_equal([{ "path" => "/users/kentaro" }], filtered[2][1]) # nothing to do
     end
 
     def test_remove_query_params
@@ -205,14 +201,13 @@ class RewriteFilterTest < Test::Unit::TestCase
           replace
         </rule>
       ])
-      d.run do
-        d.filter({ "path" => "/foo?bar=1" })
+      d.run(default_tag: 'test') do
+        d.feed({ "path" => "/foo?bar=1" })
       end
-      filtered = d.filtered_as_array
+      filtered = d.filtered
 
       assert_equal 1, filtered.size
-      assert_equal('test', filtered[0][0])
-      assert_equal([{ "path" => "/foo" }], filtered[0][2])
+      assert_equal([{ "path" => "/foo" }], filtered[0][1])
     end
   end
 end
