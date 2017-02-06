@@ -1,5 +1,12 @@
 # fluent-plugin-rewrite, a plugin for [Fluentd](http://fluentd.org)
 
+## Requirements
+
+| fluent-plugin-rewrite | fluentd    | ruby   |
+|-----------------------|------------|--------|
+| >= 0.1.0              | >= v0.14.8 | >= 2.1 |
+| <  0.1.0              | >= v0.12.0 | >= 1.9 |
+
 ## Component
 
 ### RewriteOutput
