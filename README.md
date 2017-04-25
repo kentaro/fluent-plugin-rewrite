@@ -257,7 +257,7 @@ Thus, this filter version does not able to specify `append_to_tag`, `tag`, and `
     pattern ^500$
     ignore  true
   </rule>
-</match>
+</filter>
 ```
 
 ## Configuration
