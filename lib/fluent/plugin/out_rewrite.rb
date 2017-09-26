@@ -30,14 +30,6 @@ module Fluent::Plugin
       @rewrite_rule = Fluent::RewriteRule.new(self, conf)
     end
 
-    def start
-      super
-    end
-
-    def shutdown
-      super
-    end
-
     def process(tag, es)
       _tag = tag.clone
 
