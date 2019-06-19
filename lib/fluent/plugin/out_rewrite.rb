@@ -56,6 +56,6 @@ module Fluent::Plugin
           end
         end
       end
-    end    
+    end
   end
 end
