@@ -30,6 +30,10 @@ module Fluent::Plugin
       @rewrite_rule = Fluent::RewriteRule.new(self, conf)
     end
 
+    def multi_workers_ready?
+      true
+    end
+
     def process(tag, es)
       _tag = tag.clone
 
@@ -52,6 +56,6 @@ module Fluent::Plugin
           end
         end
       end
-    end
+    end    
   end
 end
